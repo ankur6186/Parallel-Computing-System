@@ -47,10 +47,18 @@ void quicksort_task(ll A[],ll low,ll high)
 	if(low < high)
 	{
 		ll p = partition(A,low,high);
-		#pragma omp task
-			quicksort_task(A,low,p-1);
-		#pragma omp task
-			quicksort_task(A,p+1,high);
+		if(high-low < 1000)
+		{
+			quicksort_serial(A,low,p-1);
+			quicksort_serial(A,p+1,high);
+		}
+		else
+		{
+			#pragma omp task
+				quicksort_task(A,low,p-1);
+			#pragma omp task
+				quicksort_task(A,p+1,high);
+		}
 	}
 }
 
@@ -59,11 +67,19 @@ void quicksort_task_wait(ll A[],ll low,ll high)
 	if(low < high)
 	{
 		ll p = partition(A,low,high);
-		#pragma omp task shared(A) firstprivate(low,p)
-			quicksort_task_wait(A,low,p-1);
-		#pragma omp task shared(A) firstprivate(high,p)
-			quicksort_task_wait(A,p+1,high);
-		#pragma omp taskwait
+		if(high-low < 1000)
+		{
+			quicksort_serial(A,low,p-1);
+			quicksort_serial(A,p+1,high);
+		}
+		else
+		{
+			#pragma omp task shared(A) firstprivate(low,p)
+				quicksort_task_wait(A,low,p-1);
+			#pragma omp task shared(A) firstprivate(high,p)
+				quicksort_task_wait(A,p+1,high);
+			#pragma omp taskwait
+		}
 	}
 }
 
